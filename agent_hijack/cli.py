@@ -23,9 +23,15 @@ from .runner import generate, installed_models, unload
 from .score import judge, rate
 
 
-def _run(models: list[str], repeats: int, seed: int, host: str) -> dict:
+def _run(models: list[str], repeats: int, seed: int, host: str, defense: str = "none") -> dict:
     have = set(installed_models(host))
-    report: dict = {"host": host, "repeats": repeats, "seed": seed, "models": {}}
+    report: dict = {
+        "host": host,
+        "repeats": repeats,
+        "seed": seed,
+        "defense": defense,
+        "models": {},
+    }
 
     for model in models:
         if model not in have:
@@ -42,8 +48,8 @@ def _run(models: list[str], repeats: int, seed: int, host: str) -> dict:
             for case in C.CASES:
                 gen = generate(
                     model,
-                    C.SYSTEM,
-                    C.prompt_for(case),
+                    C.system_for(defense),
+                    C.prompt_for(case, defense),
                     host=host,
                     seed=run_seed,
                 )
@@ -99,6 +105,12 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--repeats", type=int, default=3, help="passes per case (default 3)")
     run.add_argument("--seed", type=int, default=7, help="base seed (default 7)")
     run.add_argument("--host", default="http://127.0.0.1:11434")
+    run.add_argument(
+        "--defense",
+        choices=("none", "spotlight"),
+        default="none",
+        help="run the cases behind a mitigation and measure what it buys (default none)",
+    )
     run.add_argument("--out", type=Path, help="write the full report here as JSON")
 
     args = parser.parse_args(argv)
@@ -115,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "run":
         models = [m.strip() for m in args.models.split(",") if m.strip()]
-        report = _run(models, args.repeats, args.seed, args.host)
+        report = _run(models, args.repeats, args.seed, args.host, args.defense)
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
