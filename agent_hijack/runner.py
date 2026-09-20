@@ -31,6 +31,11 @@ class Generation:
     total_seconds: float
     ok: bool
     error: str = ""
+    # Generation time alone, with model loading and prompt processing excluded.
+    # Ollama evicts a model when the next one needs the VRAM, so in a sweep over
+    # several models the load time lands inside total_seconds and would report a
+    # model as three times slower than it is.
+    eval_seconds: float = 0.0
 
 
 def generate(
@@ -84,7 +89,29 @@ def generate(
         eval_count=int(body.get("eval_count", 0)),
         total_seconds=round(body.get("total_duration", 0) / 1e9, 2),
         ok=True,
+        eval_seconds=round(body.get("eval_duration", 0) / 1e9, 3),
     )
+
+
+def unload(model: str, host: str = DEFAULT_HOST, timeout: float = 30.0) -> None:
+    """Drop a model out of video memory, and say nothing if that fails.
+
+    Ollama keeps a model resident for five minutes after the last call, so in a
+    sweep the second model shares the card with the first and reports a speed
+    that belongs to the pair, not to itself. Unloading between models is what
+    makes two rows in the table comparable.
+    """
+    payload = {"model": model, "prompt": "", "keep_alive": 0}
+    request = urllib.request.Request(
+        f"{host}/api/generate",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"content-type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout):
+            pass
+    except (urllib.error.URLError, TimeoutError):
+        pass
 
 
 def installed_models(host: str = DEFAULT_HOST, timeout: float = 20.0) -> list[str]:

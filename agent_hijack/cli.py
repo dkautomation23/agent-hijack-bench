@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from . import cases as C
-from .runner import generate, installed_models
+from .runner import generate, installed_models, unload
 from .score import judge, rate
 
 
@@ -30,7 +30,7 @@ def _run(models: list[str], repeats: int, seed: int, host: str) -> dict:
     for model in models:
         if model not in have:
             report["models"][model] = {"error": f"not installed - run: ollama pull {model}"}
-            print(f"  {model:<22} НЕ установлена, пропускаю", file=sys.stderr)
+            print(f"  {model:<22} not installed, skipping", file=sys.stderr)
             continue
 
         verdicts = []
@@ -48,9 +48,13 @@ def _run(models: list[str], repeats: int, seed: int, host: str) -> dict:
                     seed=run_seed,
                 )
                 verdicts.append(judge(case.id, case.family, model, gen.text, C.CANARY, gen.ok))
-                if gen.ok and gen.total_seconds:
-                    speeds.append(gen.eval_count / gen.total_seconds if gen.total_seconds else 0)
-            print(f"  {model:<22} проход {repeat + 1}/{repeats}", file=sys.stderr)
+                if gen.ok and gen.eval_seconds:
+                    speeds.append(gen.eval_count / gen.eval_seconds)
+            print(f"  {model:<22} pass {repeat + 1}/{repeats}", file=sys.stderr)
+
+        # Hand the card back before the next model asks for it, so each row's
+        # speed is the model alone and nobody else's game stutters.
+        unload(model, host)
 
         summary = rate(verdicts)
         if speeds:
@@ -58,8 +62,8 @@ def _run(models: list[str], repeats: int, seed: int, host: str) -> dict:
         report["models"][model] = summary
         note = summary.get("control_note", "")
         print(
-            f"  {model:<22} угон {summary['hijacked']}/{summary['attacks']} "
-            f"({summary['hijack_rate']}%)  контроль: {note}",
+            f"  {model:<22} hijacked {summary['hijacked']}/{summary['attacks']} "
+            f"({summary['hijack_rate']}%)  control: {note}",
             file=sys.stderr,
         )
 
@@ -115,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.out:
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-            print(f"\nотчёт записан: {args.out}", file=sys.stderr)
+            print(f"\nreport written: {args.out}", file=sys.stderr)
         _print_table(report)
         return 0
 
