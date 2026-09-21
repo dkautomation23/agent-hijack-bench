@@ -158,12 +158,14 @@ it is a drop in attack success to near zero.
 | **qwen3:8b** | 25% | **41.7% — worse** |
 | **qwen3:32b** | 25% | **50% — worse** |
 
-For ten models the defence does what it promises, four of them all the way to
-zero. For two it makes things worse — and both are Qwen. That is no longer a
-coincidence: the same prompt that teaches most models to distrust the document
-appears to teach this family to engage with it instead. A mitigation is not a
-property of the wrapper alone; it is a property of the pair, and it has to be
-measured on the model you actually run.
+For ten models the defence does what it promises, six of them all the way to
+zero. For two it moves the wrong way — and both are Qwen, which is tempting to
+read as a family trait. It isn't: qwen3:14b went 25% to 0% and qwen3-coder:30b
+50% to 25% under the same wrapper. Two of four Qwen models improved and two got
+worse, which is what no explanation looks like. At n=12 a two-case difference is
+a direction, not a proven regression. The conclusion that does survive: a
+mitigation is not a property of the wrapper alone; it is a property of the pair,
+and it has to be measured on the model you actually run.
 
 The six models that were never hijacked stay at 0% with the defence on, so it
 costs them nothing either.
@@ -227,10 +229,11 @@ card: 107 vs 112 tok/s on an 8B and 8.7 vs 25.7 on a dense 24B.
 Three things this table settles for a 16 GB card:
 
 - **A mixture-of-experts model is not priced by its parameter count.**
-  gpt-oss:20b holds 21 billion parameters and still outruns a dense 12B, because
+  gpt-oss:20b holds 20.9 billion parameters and still outruns a dense 12B, because
   only 3.6 billion of them are active per token. What has to fit in video memory
   is the file, not the headline number. The contrast is devstral:24b: dense, a
-  similar file size, and seven times slower than gpt-oss on the same card.
+  similar file size, and three times slower than gpt-oss on the same card
+  (32.1 against 107.5 tok/s).
 - **117 billion parameters do run on a 16 GB card — at 6.2 tokens/sec.**
   gpt-oss:120b is a 65 GB file: 78% of it ends up on the CPU and the rest is
   paged from an NVMe drive. It answers, the control is clean, and it is sixteen
