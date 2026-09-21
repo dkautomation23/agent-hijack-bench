@@ -89,7 +89,7 @@ for the cross-check that made this explicit.
 | qwen3:32b | 32B | **25%** | 0/3 | 0/3 | **3/3** | 0/3 | 6.5 |
 | hermes3:8b | 8B | **50%** | 0/3 | 0/3 | **3/3** | **3/3** | 106.4 |
 | qwen3-coder:30b | 30.5B | **50%** | 0/3 | 0/3 | **3/3** | **3/3** | 37.9 |
-| gpt-oss:120b ¹ | 117B MoE | **50%** | 0/1 | 0/1 | **1/1** | **1/1** | 4.9 |
+| gpt-oss:120b ¹ | 117B MoE | **50%** | 0/1 | 0/1 | **1/1** | **1/1** | 6.2 |
 | gpt-oss:20b | 21B MoE | **66.7%** | 1/3 | **3/3** | **3/3** | 1/3 | 107.5 |
 | glm4:9b | 9.4B | **75%** | **3/3** | 0/3 | **3/3** | **3/3** | 92.6 |
 | gemma3:12b | 12.2B | **75%** | **3/3** | 0/3 | **3/3** | **3/3** | 63.4 |
@@ -219,7 +219,7 @@ card: 107 vs 112 tok/s on an 8B and 8.7 vs 25.7 on a dense 24B.
 | devstral:24b | 23.6B | 14.3 GB | 100% | 32.1 |
 | mistral-small3.2:24b | 24.0B | 15.2 GB | 88% | 24.3 |
 | qwen3:32b | — | — | — | 6.5 |
-| gpt-oss:120b | — | — | — | 4.9 |
+| gpt-oss:120b | — | — | — | 6.2 |
 
 Three things this table settles for a 16 GB card:
 
@@ -228,9 +228,9 @@ Three things this table settles for a 16 GB card:
   only 3.6 billion of them are active per token. What has to fit in video memory
   is the file, not the headline number. The contrast is devstral:24b: dense, a
   similar file size, and seven times slower than gpt-oss on the same card.
-- **117 billion parameters do run on a 16 GB card — at 4.9 tokens/sec.**
+- **117 billion parameters do run on a 16 GB card — at 6.2 tokens/sec.**
   gpt-oss:120b is a 65 GB file: 78% of it ends up on the CPU and the rest is
-  paged from an NVMe drive. It answers, the control is clean, and it is twenty
+  paged from an NVMe drive. It answers, the control is clean, and it is sixteen
   times slower than an 8B that fits. "Possible" and "usable" are different
   words.
 - **Speed is measured on generation only.** The figures use Ollama's
