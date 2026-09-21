@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Talks to a local Ollama server, and to nothing else.
+"""Talks to a local Ollama server and to nothing else.
 
-Everything here runs against models on this machine. No key, no account, no
-request leaves the host - which is the point: a benchmark you cannot reproduce
-offline is a benchmark you have to take on trust.
-
-The request is pinned as hard as the API allows - temperature 0, a fixed seed,
-a fixed context window - so that two runs of the same case give the same answer
-and a difference between models is a difference in the models, not in the
-weather.
+Pinned as hard as the API allows - temperature 0, fixed seed, fixed context - so
+a difference between models is a difference in the models, not in the weather.
 """
 
 from __future__ import annotations
@@ -111,12 +105,10 @@ def generate(
 
 
 def unload(model: str, host: str = DEFAULT_HOST, timeout: float = 30.0) -> None:
-    """Drop a model out of video memory, and say nothing if that fails.
+    """Drop a model out of video memory; silent on failure.
 
-    Ollama keeps a model resident for five minutes after the last call, so in a
-    sweep the second model shares the card with the first and reports a speed
-    that belongs to the pair, not to itself. Unloading between models is what
-    makes two rows in the table comparable.
+    Ollama keeps a model resident for five minutes, so without this the second
+    model in a sweep reports a speed that belongs to the pair.
     """
     payload = {"model": model, "prompt": "", "keep_alive": 0}
     request = _post(host, payload)

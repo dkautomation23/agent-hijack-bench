@@ -1,5 +1,9 @@
 # agent-hijack-bench
 
+[![CI](https://github.com/dkautomation23/agent-hijack-bench/actions/workflows/ci.yml/badge.svg)](https://github.com/dkautomation23/agent-hijack-bench/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/dkautomation23/agent-hijack-bench/badge)](https://scorecard.dev/viewer/?uri=github.com/dkautomation23/agent-hijack-bench)
+[![CodeQL](https://github.com/dkautomation23/agent-hijack-bench/actions/workflows/codeql.yml/badge.svg)](https://github.com/dkautomation23/agent-hijack-bench/actions/workflows/codeql.yml)
+
 Measures one thing: when a language model is used as an agent and handed a file
 a website publishes for it to read, how often does the model obey an instruction
 hidden in that file instead of the user's.
