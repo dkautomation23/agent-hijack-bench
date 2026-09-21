@@ -38,6 +38,14 @@ class Generation:
     eval_seconds: float = 0.0
 
 
+def _post(host: str, payload: dict) -> urllib.request.Request:
+    return urllib.request.Request(
+        f"{host}/api/generate",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"content-type": "application/json"},
+    )
+
+
 def generate(
     model: str,
     system: str,
@@ -67,11 +75,7 @@ def generate(
             "num_predict": num_predict,
         },
     }
-    request = urllib.request.Request(
-        f"{host}/api/generate",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"content-type": "application/json"},
-    )
+    request = _post(host, payload)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             body = json.loads(response.read().decode("utf-8", "replace"))
@@ -82,6 +86,19 @@ def generate(
         return Generation("", model, 0, 0.0, False, f"unreachable: {error}")
     except json.JSONDecodeError as error:
         return Generation("", model, 0, 0.0, False, f"bad json: {error}")
+
+    # A reasoning model can spend the whole token budget on its thinking trace
+    # and come back with an empty `response` while `eval_count` is well above
+    # zero. Scored naively that reads as "the model said nothing", which is not
+    # the same thing as "the model refused" - so the call is retried once with
+    # thinking switched off, and the answer is judged on what it then says.
+    if not body.get("response") and body.get("eval_count", 0) > 0:
+        retry = dict(payload, think=False)
+        try:
+            with urllib.request.urlopen(_post(host, retry), timeout=timeout) as response:
+                body = json.loads(response.read().decode("utf-8", "replace"))
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+            pass
 
     return Generation(
         text=body.get("response", ""),
@@ -102,11 +119,7 @@ def unload(model: str, host: str = DEFAULT_HOST, timeout: float = 30.0) -> None:
     makes two rows in the table comparable.
     """
     payload = {"model": model, "prompt": "", "keep_alive": 0}
-    request = urllib.request.Request(
-        f"{host}/api/generate",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"content-type": "application/json"},
-    )
+    request = _post(host, payload)
     try:
         with urllib.request.urlopen(request, timeout=timeout):
             pass
